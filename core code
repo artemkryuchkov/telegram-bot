@@ -1,0 +1,244 @@
+function doPost(e) {
+  var ss =  SpreadsheetApp.openById('#ID');
+  var sheet = ss.getSheetByName('#NAME');
+  var update = JSON.parse(e.postData.contents);
+  var API_TOKEN = '#TOKEN';
+  var telsheet = ss.getSheetByName('#NAME');
+  
+  //checking for message
+  var msg = update.message;
+  
+  //checking for callbacks (inline keyboard)
+  
+  if (update.callback_query)
+  { 
+    var id_callback = update.callback_query.from.id;
+    var data = update.callback_query.data;
+    if (data == '/#DATAONE'){
+          var getstatus = sheet.getRange;
+          var customsCost = getstatus.toFixed(2);
+          var day = getstatus[16][2].getDate();
+          var month = getstatus[16][2].getMonth()+1; //because of Jan is 0
+      if (day<10){
+        day = '0'+day;
+      }
+      if (month<10){
+        month = '0'+month;
+      }
+          let dm = day+'.'+month;
+        let text = '💰 '+getstatus[15][2]+' ➟ '+getstatus[15][3]+'\n'+
+                            getstatus[16][3]+' от '+dm+' '+realizationCost+' '+getstatus[16][4]+'\n';
+      
+          var payloadDl = {
+            'method': 'sendMessage',
+            'chat_id': String(id_callback),
+            'text': text,
+            'parse_mode': 'HTML'
+          }
+          var dataD = {
+            "method": "post",
+            "payload": payloadDl
+          }
+    UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', dataD); 
+    }
+  }
+    else if (msg)
+    {
+    var chatId = msg.chat.id;
+    var text = msg.text;
+  switch(text) {
+          case '/start':
+          
+          var startKeyBoard = {
+            'keyboard': [
+              [{'text': '1',
+                "resize_keyboard": true
+               } 
+                ],
+              [{'text': '2',
+                "resize_keyboard": true
+               }],
+               [{'text': '3',
+                "resize_keyboard": true
+               }]
+            ],
+            "resize_keyboard": true
+          }
+        
+          //creatingmessage
+          var payloadDl = {
+            'method': 'sendMessage',
+            'chat_id': String(chatId),
+            'text': 'string',
+            'parse_mode': 'HTML',
+            'reply_markup': JSON.stringify(startKeyBoard)
+          }
+          var dataD = {
+            "method": "post",
+            "payload": payloadDl
+          }
+         
+          UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', dataD);
+          
+          break;
+          
+       
+    case '2':
+          
+      var today = new Date();
+      var day = today.getDate();
+      var month = today.getMonth()+1;
+      if (day<10){
+        day = '0'+day;
+      }
+      if (month<10){
+        month = '0'+month;
+      }
+      var getNumberOfStatus = telsheet.getRange(3, 2, 1, 3).getValues();
+      var getNumberOfRows = telsheet.getRange(3, 7).getValue();
+      var getNumberOfRowsIssued = telsheet.getRange(3, 16).getValue();
+      var getNumberofRowsAtCustoms = telsheet.getRange(3, 18).getValue();
+      var countOfData = '';
+      var issuedData = '';
+      var customsData = '';
+      var atCustomsMsg = '';
+      var customsMsg = '';
+      var issuedMsg = '';
+      var atCustomsArr = [];
+      var customsArr = [];
+      var issuedArr = [];
+      //onecase
+      if (getNumberOfRows > 0) {
+        countOfData = telsheet.getRange(4, 7, getNumberOfRows, 8).getValues();
+        for(var i =0;i<getNumberOfRows;i++){
+        customsMsg = '<strong>'+countOfData[i][0]+'</strong>'+' '+countOfData[i][1]+' '+countOfData[i][2]+' '+countOfData[i][3]+'\n'+
+                ' '+countOfData[i][5].toFixed(2)+''+' '+countOfData[i][6].toFixed(2)+''+countOfData[i][7].toFixed(2)+'\n'+'\n';
+        customsArr.push(customsMsg.replace(/[,]+/g, " "));
+        }}
+//      //2ndcase
+      if(getNumberOfRowsIssued > 0){
+        issuedData = telsheet.getRange(4, 16, getNumberOfRowsIssued, 2).getValues();
+        for(var w =0;w<getNumberOfRowsIssued;w++){
+        issuedMsg = '<strong>'+issuedData[w][0]+'</strong>'+' '+issuedData[w][1]+'\n';
+        issuedArr.push(issuedMsg.replace(/[,]+/g," "));
+        }}
+//      // 3rd case
+      if (getNumberofRowsAtCustoms > 0){
+        customsData = telsheet.getRange(4, 18, getNumberofRowsAtCustoms, 9).getValues();
+         for(var e =0;e<getNumberofRowsAtCustoms;e++){
+        atCustomsMsg = '<strong>'+customsData[e][0]+'</strong>'+' '+customsData[e][1]+' '+customsData[e][2]+' '+customsData[e][3]+'\n'+
+                ' '+customsData[e][5].toFixed(2)+' '+' '+customsData[e][6].toFixed(2)+' '+customsData[e][7].toFixed(2)+'\n'+'\n';
+          atCustomsArr.push(atCustomsMsg.replace(/[,]+/g," ")); 
+         }}  
+
+          var messageCustoms1 = '<strong> На '+day+'.'+month+' на таможне находятся следующие грузы: </strong> \n'+
+            '\n'+
+            '<strong>THREE </strong>'+ getNumberOfStatus[0][1]+ ' заказ(а) \n'+'\n'+atCustomsArr.join(' ');
+
+            var messageCustoms2 =  '<strong> ONE </strong>'+ getNumberOfStatus[0][2]+ ' заказ(а) \n'+'\n'+customsArr.join(' ');
+              
+             var messageCustoms3 =   '<strong> TWO </strong>' + getNumberOfStatus[0][0]+ ' заказ(а) \n'+'\n'+issuedArr.join(' ');
+            
+          //формируем сообщение
+          var payloadCst = {
+            'method': 'sendMessage',
+            'chat_id': String(chatId),
+            'text': messageCustoms1+messageCustoms2+messageCustoms3,
+            'parse_mode': 'HTML'
+          }
+          var dataCst = {
+            "method": "post",
+            "payload": payloadCst
+          }
+         
+          UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', dataCst);
+          break;
+          
+          
+          
+        case '/help':
+          let message = 'string';
+        
+          //формируем сообщение
+          let payload = {
+            'method': 'sendMessage',
+            'chat_id': String(chatId),
+            'text': message,
+            'parse_mode': 'HTML'
+          }
+          let data = {
+            "method": "post",
+            "payload": payload
+          }
+         
+          UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', data);
+          break;
+          
+          // TAKING NUMBER AND RETURNING DATA
+          
+        case text.match(/[0-9]+/).toString():
+          var orderNum = text.match(/[0-9]+/);
+          var getMessageToChange = sheet.getRange(2, 7).setValue(orderNum);
+      // inline keyboard    
+      
+      var keyBoardYN = {
+            'inline_keyboard': [
+              [{'text': 'kb',
+                'callback_data': '/kb'
+               }],
+              [{'text': 'kb2',
+                'callback_data': '/kb2'
+               }],
+              [{'text': 'kb3 ',
+                'callback_data': '/kb3'
+               }]
+         ]};
+      
+        
+          // работа с забором данных начинается тут 
+          var getstatus = sheet.getRange(2, 7, 17, 9).getValues();
+          var messageLinkTotheDrive = '<a href="https://drive.google.com/drive/folders/'+getstatus[16][5]+'"> 📁</a>';
+          var customsCost = getstatus[8][7].toFixed(2);
+          var realizationCost = getstatus[15][8].toFixed(2);
+      var linktoCell = '<a href="tel:'+getstatus[13][8]+'">'+getstatus[13][8]+'</a>';
+
+          let messageGetStatus = '<strong> Заказ №'+getstatus[0][0] +' - '+getstatus[1][5]+messageLinkTotheDrive+'</strong> \n'+
+            getstatus[1][1]+'\n'+  
+               getstatus[1][3]+'\n'+
+                +'\n'+linktoCell;
+
+          let payloadGetStatus = {
+            'method': 'sendMessage',
+            'chat_id': String(chatId),
+            'text': messageGetStatus,
+            'parse_mode': 'HTML',
+            'reply_markup': JSON.stringify(keyBoardYN)
+          }
+          let dataGetStatus = {
+            "method": "post",
+            "payload": payloadGetStatus
+          }
+          
+          UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', dataGetStatus);
+          break;
+
+          
+        default: 
+          var message2 = 'string';
+        
+          //формируем сообщение
+          var payload2 = {
+            'method': 'sendMessage',
+            'chat_id': String(chatId),
+            'text': message2,
+            'parse_mode': 'HTML',
+            'reply_markup': 'ReplyKeyboardMarkup'
+          }
+          var dataUpd = {
+            "method": "post",
+            "payload": payload2
+          }
+          UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', dataUpd);
+    }
+  }
+  }
